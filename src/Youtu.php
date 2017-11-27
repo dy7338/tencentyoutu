@@ -88,14 +88,22 @@ class Youtu {
         $rsp = $this->send ($req);
         $ret = json_decode ($rsp, true);
         if ($ret['errorcode'] == '0' && $ret['errormsg'] == 'OK') {
-            $data = array (
-                'name'    => $ret['name'],
-                'sex'     => $ret['sex'] == '男' ? 1 : 2,
-                'nation'  => $ret['nation'],
-                'birth'   => explode ('/', $ret['birth']),
-                'address' => $ret['address'],
-                'id'      => $ret['id']
-            );
+
+            if ($card_type == 0) {
+                $data = array (
+                    'name'    => $ret['name'],
+                    'sex'     => $ret['sex'] == '男' ? 1 : 2,
+                    'nation'  => $ret['nation'],
+                    'birth'   => explode ('/', $ret['birth']),
+                    'address' => $ret['address'],
+                    'id'      => $ret['id']
+                );
+            } elseif ($card_type == 1) {
+                $data = array (
+                    'valid_date' => explode ('-', $ret['valid_date']),
+                    'authority'  => $ret['authority']
+                );
+            }
 
             return array ('status' => 1, 'message' => '成功', 'data' => $data);
         } else {
