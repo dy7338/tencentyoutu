@@ -23,6 +23,9 @@ class Youtu {
     //银行卡识别
     const YOUTU_CREDITCARDOCR_URL = 'https://api.youtu.qq.com/youtu/ocrapi/creditcardocr';
 
+    //营业执照识别
+    const YOUTU_BIZLICENSEOCR_URL = 'https://api.youtu.qq.com/youtu/ocrapi/bizlicenseocr';
+
     public function __construct ($appid = '', $secretId = '', $secretKey = '', $userid = '') {
         $this->appid = $appid;
         $this->secretId = $secretId;
@@ -159,6 +162,69 @@ class Youtu {
                 'name'     => isset($ret['items'][2]) ? $ret['items'][2]['itemstring'] : '',
                 'bank'     => isset($ret['items'][3]) ? $ret['items'][3]['itemstring'] : '',
                 'validity' => isset($ret['items'][4]) ? $ret['items'][4]['itemstring'] : '',
+            );
+
+            return array ('status' => 1, 'message' => '成功', 'data' => $data);
+        } else {
+            return array ('status' => 0, 'message' => $ret['errormsg'], 'data' => $ret);
+        }
+    }
+
+    /**
+     * 功能：营业执照识别
+     *
+     * @param $image_path 可为图片真实url或者相对url
+     *
+     * @return array
+     * @author xiaole
+     * @time   17/11/27 下午2:07
+     */
+    public function bizlicenseocr($image_path){
+        $is_url = substr ($image_path, 0, 4) == "http" ? true : false;
+
+        if ($is_url === true) {
+            $post_data = array (
+                'app_id' => $this->appid,
+                'url'    => $image_path,
+                'seq'    => ''
+            );
+        } else {
+            $real_image_path = realpath ($image_path);
+
+            if (!file_exists ($real_image_path)) {
+                return array ('status' => 0, 'message' => '找不到图片', 'data' => array ());
+            }
+
+            $image_data = file_get_contents ($real_image_path);
+            $post_data = array (
+                'app_id' => $this->appid,
+                'image'  => base64_encode ($image_data),
+                'seq'    => ''
+            );
+        }
+
+        $postUrl = self::YOUTU_BIZLICENSEOCR_URL;
+        $sign = $this->appSign ();
+
+        $req = array (
+            'url'     => $postUrl,
+            'method'  => 'post',
+            'timeout' => 10,
+            'data'    => json_encode ($post_data),
+            'header'  => array (
+                'Authorization:' . $sign,
+                'Content-Type:text/json',
+                'Expect: ',
+            ),
+        );
+
+        $rsp = $this->send ($req);
+        $ret = json_decode ($rsp, true);
+        if ($ret['errorcode'] == '0' && $ret['errormsg'] == 'OK') {
+            $data = array (
+                'id'       => isset($ret['items'][0]) ? $ret['items'][0]['itemstring'] : '',
+                'name'     => isset($ret['items'][1]) ? $ret['items'][1]['itemstring'] : '',
+                'address'  => isset($ret['items'][2]) ? $ret['items'][2]['itemstring'] : ''
             );
 
             return array ('status' => 1, 'message' => '成功', 'data' => $data);
